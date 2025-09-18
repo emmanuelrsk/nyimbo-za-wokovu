@@ -2,113 +2,197 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Nyimbo za Wokovu</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #fafafa;
+      background: #f8f8f8;
       margin: 0;
       padding: 0;
+      line-height: 1.6;
     }
     header {
-      text-align: center;
-      background: #2c3e50;
+      background: #2d6a4f;
       color: white;
       padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
     }
-    .search-box {
-      display: block;
-      width: 90%;
-      max-width: 600px;
-      margin: 1rem auto;
+    .search-container {
       padding: 10px;
-      font-size: 16px;
+      text-align: center;
+      background: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .search-container input {
+      width: 90%;
+      max-width: 500px;
+      padding: 10px;
+      font-size: 1rem;
       border: 1px solid #ccc;
       border-radius: 8px;
+      outline: none;
     }
-    .song {
-      background: white;
-      margin: 1rem auto;
-      max-width: 700px;
-      padding: 1rem;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    .songs-container {
+      padding: 15px;
+      max-width: 800px;
+      margin: auto;
     }
-    .song h2 {
-      margin: 0 0 0.5rem 0;
-      font-size: 1.3rem;
-      color: #2c3e50;
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+      gap: 8px;
     }
-    .song pre {
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      margin: 0;
+    .grid button {
+      background: #fefae0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 8px;
+      cursor: pointer;
       font-size: 1rem;
-    }
-    .error {
-      color: red;
-      text-align: center;
       font-weight: bold;
+      transition: background 0.2s ease;
+    }
+    .grid button:hover {
+      background: #ffd166;
+    }
+    .song-card {
+      background: white;
+      padding: 15px;
+      margin-top: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .song-title {
+      font-weight: bold;
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+      color: #1b4332;
+    }
+    .lyrics {
+      white-space: pre-line;
+    }
+    .back-button {
+      display: inline-block;
+      margin-bottom: 10px;
+      background: #2d6a4f;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .no-results {
+      text-align: center;
+      color: #888;
+      margin-top: 20px;
+    }
+    footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #555;
+      padding: 15px;
+      background: #f1f1f1;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
+  <header>Nyimbo za Wokovu</header>
 
-<header>
-  <h1>Nyimbo za Wokovu</h1>
-</header>
+  <div class="search-container">
+    <input type="text" id="search" placeholder="Search by number, title, or lyrics...">
+  </div>
 
-<input type="text" class="search-box" placeholder="Search songs..." onkeyup="filterSongs()">
+  <div class="songs-container" id="songs"></div>
 
-<div id="songs-container">
-  <p>Loading songs...</p>
-</div>
+  <footer>
+    Developed by @EmmanuelRusaka — emmanuelrsk11@gmail.com
+  </footer>
 
-<script>
-async function loadSongs() {
-  try {
-    console.log("📥 Fetching songs from nyimbo_za_wokovu.json...");
-    const response = await fetch('nyimbo_za_wokovu.json');
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const songs = await response.json();
+  <script>
+    let songsData = [];
 
-    console.log(`✅ Loaded ${songs.length} songs!`);
-    displaySongs(songs);
-    window.allSongs = songs; // store globally for search
-  } catch (err) {
-    console.error("❌ Could not load songs:", err);
-    document.getElementById("songs-container").innerHTML =
-      `<p class="error">⚠️ Could not load songs. Check nyimbo_za_wokovu.json in the repo.</p>`;
-  }
-}
+    async function loadSongs() {
+      try {
+        const response = await fetch('nyimbo_za_wokovu.json');
+        songsData = await response.json();
+        showGrid();
+      } catch (error) {
+        document.getElementById('songs').innerHTML =
+          '<p class="no-results">⚠️ Could not load songs. Make sure nyimbo_za_wokovu.json is in the same folder.</p>';
+        console.error('Error loading JSON:', error);
+      }
+    }
 
-function displaySongs(songs) {
-  const container = document.getElementById('songs-container');
-  container.innerHTML = '';
-  songs.forEach(song => {
-    const songDiv = document.createElement('div');
-    songDiv.className = 'song';
-    songDiv.innerHTML = `
-      <h2>${song.number ? song.number + ". " : ""}${song.title}</h2>
-      <pre>${song.lyrics}</pre>
-    `;
-    container.appendChild(songDiv);
-  });
-}
+    function showGrid() {
+      const container = document.getElementById('songs');
+      container.innerHTML = '';
+      const grid = document.createElement('div');
+      grid.classList.add('grid');
 
-function filterSongs() {
-  const search = document.querySelector('.search-box').value.toLowerCase();
-  const filtered = window.allSongs.filter(song =>
-    song.title.toLowerCase().includes(search) ||
-    song.lyrics.toLowerCase().includes(search)
-  );
-  displaySongs(filtered);
-}
+      songsData.forEach(song => {
+        const btn = document.createElement('button');
+        btn.textContent = song.number;
+        btn.onclick = () => showSong(song.number);
+        grid.appendChild(btn);
+      });
 
-// Load songs when page loads
-loadSongs();
-</script>
+      container.appendChild(grid);
+    }
 
+    function showSong(number) {
+      const song = songsData.find(s => s.number === number);
+      const container = document.getElementById('songs');
+      container.innerHTML = `
+        <a class="back-button" onclick="showGrid()">← Back</a>
+        <div class="song-card">
+          <div class="song-title">${song.title}</div>
+          <div class="lyrics">${song.lyrics.replace(/\n/g, '<br>')}</div>
+        </div>
+      `;
+    }
+
+    document.getElementById('search').addEventListener('input', function() {
+      const query = this.value.toLowerCase();
+      if (query.trim() === "") {
+        showGrid();
+        return;
+      }
+      const filtered = songsData.filter(song =>
+        (song.number && song.number.toString().includes(query)) ||
+        (song.title && song.title.toLowerCase().includes(query)) ||
+        (song.lyrics && song.lyrics.toLowerCase().includes(query))
+      );
+      displaySearchResults(filtered);
+    });
+
+    function displaySearchResults(songs) {
+      const container = document.getElementById('songs');
+      container.innerHTML = '';
+
+      if (songs.length === 0) {
+        container.innerHTML = '<p class="no-results">No songs found.</p>';
+        return;
+      }
+
+      songs.forEach(song => {
+        const card = document.createElement('div');
+        card.classList.add('song-card');
+        card.innerHTML = `
+          <div class="song-title">${song.title}</div>
+          <div class="lyrics">${song.lyrics.replace(/\n/g, '<br>')}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    loadSongs();
+  </script>
 </body>
 </html>
